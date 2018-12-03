@@ -1,4 +1,5 @@
 # https://kuntalchandra.wordpress.com/2017/08/23/python-socket-programming-server-client-application-using-threads/
+import pdb
 import socket
 import sys
 import traceback
@@ -12,6 +13,7 @@ class ServerGame:
         self.player2 = None
 
     def add_client(self, client, board):
+        print(board)
         self.boards.append({client.getpeername()[1]: board})
         if len(self.boards) == 1:
             self.player1 = client
@@ -77,6 +79,9 @@ def client_thread(connection, ip, port, max_buffer_size=5120):
             print(server_game.get_boards())
         elif code == 'begin':
             server_game.add_client(connection, data)
+        elif code == 'shoot':
+            print('shoot')
+            pdb.set_trace()
         else:
             print('Processed result: {}'.format(client_input))
             connection.sendall('-'.encode('utf8'))
