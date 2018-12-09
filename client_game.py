@@ -46,7 +46,7 @@ def main():
                 message = input(' -> ')
                 client.send_message(message.encode('utf8'))
         else:
-            # code, position, data = client.recv_message().split(';')
+            code, position, data = client.recv_message().split(';')
 
     client.send_message(b'--quit--;;')
 
