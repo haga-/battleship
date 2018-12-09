@@ -9,9 +9,16 @@ PRINT = {
 }
 
 
+def get_row_and_col_from_pos(pos):
+    row, col = pos.split(',')
+    row = ord(row.upper()) - 65
+    col = int(col) - 1
+    return (row, col)
+
+
 class Board:
     # constructor
-    def __init__(self, board = None):
+    def __init__(self, board=None):
         self.my_board = [['blank' for x in range(10)] for y in range(10)]
         if board != None:
             board = board.split(',')
@@ -19,13 +26,9 @@ class Board:
                 for y in range(10):
                     self.my_board[x][y] = board[(x * 10) + y]
 
-    def send_board(self):
-        board = ''
-        for x in range(10):
-            for y in range(10):
-                board += self.my_board[x][y] + ','
-        # To remove last comma
-        return board[:len(board) - 1]
+    def hit_ship(self, pos):
+        row, col = get_row_and_col_from_pos(pos)
+        return self.my_board[row][col] == 'ship'
 
     def print_board(self):
         row = 'A'
@@ -46,3 +49,16 @@ class Board:
                 stdout.write('  ')
             stdout.write(PRINT['trace'])
         print('+')
+
+    def send_board(self):
+        board = ''
+        for x in range(10):
+            for y in range(10):
+                board += self.my_board[x][y] + ','
+        # To remove last comma
+        return board[:len(board) - 1]
+
+    def update_board(self, pos, message):
+        row, col = get_row_and_col_from_pos(pos)
+        self.my_board[row][col] = message
+        # self.print_board()

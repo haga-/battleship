@@ -4,17 +4,18 @@ import socket
 import sys
 import traceback
 from threading import Thread
+from board import Board
 
 
 class ServerGame:
     def __init__(self):
-        self.boards = []
+        self.boards = {}
         self.player1 = None
         self.player2 = None
 
     def add_client(self, client, board):
         print(board)
-        self.boards.append({client.getpeername()[1]: board})
+        self.boards[client.getpeername()] = Board(board)
         if len(self.boards) == 1:
             self.player1 = client
             self.player1.send('begin;;wait_for_opp'.encode('utf8'))
@@ -22,6 +23,33 @@ class ServerGame:
             self.player1.send('your_turn;;can_shoot'.encode('utf8'))
             self.player2 = client
             self.player2.send('begin;;opp_found'.encode('utf8'))
+
+    def handle_shot(self, client, pos):
+        # player1 is shooting
+        if self.player1 == client:
+            if self.boards[self.player2.getpeername()].hit_ship(pos):
+                print('P1: hit')
+                self.boards[self.player2.getpeername()].update_board(pos, 'hit')
+                self.player1.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
+                self.player2.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
+            else:
+                print('P1: missed')
+                self.boards[self.player2.getpeername()].update_board(pos, 'miss')
+                self.player1.send('opp_turn;{};missed_opp'.format(pos).encode('utf8'))
+                self.player2.send('your_turn;{};opp_missed'.format(pos).encode('utf8'))
+        # player2 is shooting
+        else:
+            if self.boards[self.player1.getpeername()].hit_ship(pos):
+                print('P2: hit')
+                self.boards[self.player1.getpeername()].update_board(pos, 'hit')
+                self.player2.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
+                self.player1.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
+            else:
+                print('P2: missed')
+                self.boards[self.player1.getpeername()].update_board(pos, 'miss')
+                self.player2.send('opp_turn;{};missed_opp'.format(pos).encode('utf8'))
+                self.player1.send('your_turn;{};opp_missed'.format(pos).encode('utf8'))
+
 
     def get_boards(self):
         return self.boards
@@ -81,7 +109,7 @@ def client_thread(connection, ip, port, max_buffer_size=5120):
             server_game.add_client(connection, data)
         elif code == 'shoot':
             print('shoot')
-            pdb.set_trace()
+            server_game.handle_shot(connection, position)
         else:
             print('Processed result: {}'.format(client_input))
             connection.sendall('-'.encode('utf8'))
