@@ -30,6 +30,13 @@ class Board:
         row, col = get_row_and_col_from_pos(pos)
         return self.my_board[row][col] == 'ship'
 
+    def no_more_ships(self):
+        for x in range(10):
+            for y in range(10):
+                if self.my_board[x][y] == 'ship':
+                    return False
+        return True
+
     def print_board(self):
         row = 'A'
         print('\n    1   2   3   4   5   6   7   8   9   10')

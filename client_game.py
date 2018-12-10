@@ -4,6 +4,11 @@ import sys
 
 from player import Player
 
+WIN_MSGS = {
+    'opp_gup': 'Você ganhou a partida! Seu oponente desistiu.',
+    'sunk_all': 'Parabéns, você afundou todos os navios do adversário'
+}
+
 
 class ClientGame:
     def __init__(self, socket):
@@ -60,9 +65,16 @@ def main():
             elif data == 'opp_hit':
                 print('Opponent hit')
                 client.player.update_my_board(position, 'hit')
-            code = '' 
+            code = ''
         else:
             code, position, data = client.recv_message().split(';')
+
+    if code == 'won':
+        print(WIN_MSGS[data])
+    elif code == 'lost':
+        print('Você perdeu :/')
+
+    client.player.print_boards()
 
     client.send_message(b'--quit--;;')
 

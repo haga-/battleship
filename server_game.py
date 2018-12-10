@@ -3,6 +3,7 @@ import pdb
 import socket
 import sys
 import traceback
+
 from threading import Thread
 from board import Board
 
@@ -14,7 +15,6 @@ class ServerGame:
         self.player2 = None
 
     def add_client(self, client, board):
-        print(board)
         self.boards[client.getpeername()] = Board(board)
         if len(self.boards) == 1:
             self.player1 = client
@@ -24,14 +24,28 @@ class ServerGame:
             self.player2 = client
             self.player2.send('begin;;opp_found'.encode('utf8'))
 
+    def handle_give_up(self, client):
+        # player1 is giving up
+        if self.player1 == client:
+            self.player1.send('lost;;'.encode('utf8'))
+            self.player2.send('won;;opp_gup'.encode('utf8'))
+        # player2 is giving up
+        else:
+            self.player2.send('lost;;'.encode('utf8'))
+            self.player1.send('won;;opp_gup'.encode('utf8'))
+
     def handle_shot(self, client, pos):
         # player1 is shooting
         if self.player1 == client:
             if self.boards[self.player2.getpeername()].hit_ship(pos):
                 print('P1: hit')
                 self.boards[self.player2.getpeername()].update_board(pos, 'hit')
-                self.player1.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
-                self.player2.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
+                if self.boards[self.player2.getpeername()].no_more_ships():
+                    self.player1.send('won;;sunk_all'.encode('utf8'))
+                    self.player2.send('lost;;'.encode('utf8'))
+                else:
+                    self.player1.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
+                    self.player2.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
             else:
                 print('P1: missed')
                 self.boards[self.player2.getpeername()].update_board(pos, 'miss')
@@ -42,8 +56,12 @@ class ServerGame:
             if self.boards[self.player1.getpeername()].hit_ship(pos):
                 print('P2: hit')
                 self.boards[self.player1.getpeername()].update_board(pos, 'hit')
-                self.player2.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
-                self.player1.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
+                if self.boards[self.player1.getpeername()].no_more_ships():
+                    self.player2.send('won;;sunk_all'.encode('utf8'))
+                    self.player1.send('lost;;'.encode('utf8'))
+                else:
+                    self.player2.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
+                    self.player1.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
             else:
                 print('P2: missed')
                 self.boards[self.player1.getpeername()].update_board(pos, 'miss')
@@ -51,11 +69,8 @@ class ServerGame:
                 self.player1.send('your_turn;{};opp_missed'.format(pos).encode('utf8'))
 
 
-    def get_boards(self):
-        return self.boards
-
-
 server_game = ServerGame()
+
 
 def start_server():
     host = '127.0.0.1'
@@ -104,12 +119,14 @@ def client_thread(connection, ip, port, max_buffer_size=5120):
             connection.close()
             print('Connection {}:{} closed'.format(ip, port))
             is_active = False
-            print(server_game.get_boards())
         elif code == 'begin':
             server_game.add_client(connection, data)
         elif code == 'shoot':
             print('shoot')
             server_game.handle_shot(connection, position)
+        elif code == 'give_up':
+            print('Player {}, giving up'.format(connection))
+            server_game.handle_give_up(connection)
         else:
             print('Processed result: {}'.format(client_input))
             connection.sendall('-'.encode('utf8'))
@@ -122,7 +139,8 @@ def receive_input(connection, max_buffer_size):
     if client_input_size > max_buffer_size:
         print('The input size is greater than expected {}'.format(client_input_size))
 
-    decoded_input = client_input.decode('utf8').rstrip()  # decode and strip end of line
+    decoded_input = client_input.decode(
+        'utf8').rstrip()  # decode and strip end of line
     result = process_input(decoded_input, connection.getpeername())
 
     return result
