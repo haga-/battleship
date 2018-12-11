@@ -73,7 +73,6 @@ server_game = ServerGame()
 
 
 def start_server():
-    host = '127.0.0.1'
     port = 8888         # arbitrary non-privileged port
 
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -84,7 +83,7 @@ def start_server():
     clients = 0
 
     try:
-        soc.bind((host, port))
+        soc.bind(('', port))
     except:
         print('Bind failed. Error : ' + str(sys.exc_info()))
         sys.exit()

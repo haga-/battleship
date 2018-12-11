@@ -24,8 +24,9 @@ class ClientGame:
 
 def main():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host = '127.0.0.1'
+    host = input(' -> Informe o IP do servidor: ')
     port = 8888
+
 
     try:
         soc.connect((host, port))
@@ -76,7 +77,8 @@ def main():
 
     client.player.print_boards()
 
-    client.send_message(b'--quit--;;')
+    # client.send_message(b'--quit--;;')
+    client.socket.close()
 
 
 if __name__ == '__main__':
