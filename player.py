@@ -55,17 +55,19 @@ class Player:
         self.opponent_board.update_board(position, message)
         self.print_boards()
 
+    # prints (my/opponent)_board
     def print_board(self, which_board):
         if which_board == 'mine':
             board = self.my_board
-            header = 'My board'
+            header = 'Meu grid'
         elif which_board == 'opponent':
             board = self.opponent_board
-            header = '\nOpponent board'
+            header = '\nGrid do oponente'
         print(header)
         board.print_board()
 
 
+    # calls print_board to each board
     def print_boards(self):
         self.print_board('mine')
         self.print_board('opponent')

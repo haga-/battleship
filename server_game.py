@@ -1,11 +1,10 @@
-# https://kuntalchandra.wordpress.com/2017/08/23/python-socket-programming-server-client-application-using-threads/
 import pdb
 import socket
 import sys
 import traceback
 
-from threading import Thread
 from board import Board
+from threading import Thread
 
 
 class ServerGame:
@@ -38,7 +37,7 @@ class ServerGame:
         # player1 is shooting
         if self.player1 == client:
             if self.boards[self.player2.getpeername()].hit_ship(pos):
-                print('P1: hit')
+                print('P1: acertou')
                 self.boards[self.player2.getpeername()].update_board(pos, 'hit')
                 if self.boards[self.player2.getpeername()].no_more_ships():
                     self.player1.send('won;;sunk_all'.encode('utf8'))
@@ -47,14 +46,14 @@ class ServerGame:
                     self.player1.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
                     self.player2.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
             else:
-                print('P1: missed')
+                print('P1: errou')
                 self.boards[self.player2.getpeername()].update_board(pos, 'miss')
                 self.player1.send('opp_turn;{};missed_opp'.format(pos).encode('utf8'))
                 self.player2.send('your_turn;{};opp_missed'.format(pos).encode('utf8'))
         # player2 is shooting
         else:
             if self.boards[self.player1.getpeername()].hit_ship(pos):
-                print('P2: hit')
+                print('P2: acertou')
                 self.boards[self.player1.getpeername()].update_board(pos, 'hit')
                 if self.boards[self.player1.getpeername()].no_more_ships():
                     self.player2.send('won;;sunk_all'.encode('utf8'))
@@ -63,7 +62,7 @@ class ServerGame:
                     self.player2.send('your_turn;{};hit_opp'.format(pos).encode('utf8'))
                     self.player1.send('opp_turn;{};opp_hit'.format(pos).encode('utf8'))
             else:
-                print('P2: missed')
+                print('P2: errou')
                 self.boards[self.player1.getpeername()].update_board(pos, 'miss')
                 self.player2.send('opp_turn;{};missed_opp'.format(pos).encode('utf8'))
                 self.player1.send('your_turn;{};opp_missed'.format(pos).encode('utf8'))
@@ -87,16 +86,18 @@ def start_server():
         print('Erro: ' + str(sys.exc_info()))
         sys.exit()
 
-    soc.listen(5)       # queue up to 5 requests
+    print('Servidor aguardando jogadores')
+
+    soc.listen(2)       # queue up to 2 requests
 
     while clients < 2:
+        clients = clients + 1
         connection, address = soc.accept()
         ip, port = str(address[0]), str(address[1])
-        print('Conectado com {}: {}'.format(ip, port))
-        clients = clients + 1
+        print('Jogador {} conectado. IP: {}, porta: {}'.format(clients, ip, port))
 
         try:
-            Thread(target=client_thread, args=(connection, ip, port)).start()
+            Thread(target=client_thread, args=(connection, clients)).start()
         except:
             print('Thread não iniciou.')
             traceback.print_exc()
@@ -104,49 +105,31 @@ def start_server():
     soc.close()
 
 
-def client_thread(connection, ip, port, max_buffer_size=5120):
+def client_thread(connection, client):
     is_active = True
 
     while is_active:
-        client_input = receive_input(connection, max_buffer_size)
-        code, position, data = client_input.split(';')
-
-        if '--quit--' in client_input:
-            print('Client is requesting to quit')
-            connection.close()
-            print('Connection {}:{} closed'.format(ip, port))
+        client_input = receive_input(connection)
+        if client_input == '':
             is_active = False
-        elif code == 'begin':
-            server_game.add_client(connection, data)
-        elif code == 'shoot':
-            print('shoot')
-            server_game.handle_shot(connection, position)
-        elif code == 'give_up':
-            print('Player {}, giving up'.format(connection))
-            server_game.handle_give_up(connection)
         else:
-            print('Processed result: {}'.format(client_input))
-            connection.sendall('-'.encode('utf8'))
+            code, position, data = client_input.split(';')
+
+            if code == 'begin':
+                server_game.add_client(connection, data)
+            elif code == 'shoot':
+                print('shoot')
+                server_game.handle_shot(connection, position)
+            elif code == 'give_up':
+                print('Jogador {}, desistiu'.format(client))
+                server_game.handle_give_up(connection)
+                is_active = False
 
 
-def receive_input(connection, max_buffer_size):
-    client_input = connection.recv(max_buffer_size)
-    client_input_size = sys.getsizeof(client_input)
-
-    if client_input_size > max_buffer_size:
-        print('The input size is greater than expected {}'.format(client_input_size))
-
-    decoded_input = client_input.decode(
-        'utf8').rstrip()  # decode and strip end of line
-    result = process_input(decoded_input, connection.getpeername())
-
-    return result
-
-
-def process_input(input_str, socket_name):
-    print('Processing the input received from {}'.format(socket_name))
-
-    return str(input_str)
+def receive_input(connection):
+    client_input = connection.recv(2**12)
+    # return decoded input
+    return client_input.decode('utf8')
 
 
 if __name__ == '__main__':

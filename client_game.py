@@ -5,6 +5,11 @@ import sys
 
 from player import Player
 
+BEGIN_MSGS = {
+    'wait_for_opp': 'Conectado, espere por outro jogador',
+    'opp_found': 'Conectado, espere pela sua vez'
+}
+
 WIN_MSGS = {
     'opp_gup': 'Você ganhou a partida! Seu oponente desistiu.',
     'sunk_all': 'Parabéns, você afundou todos os navios do adversário'
@@ -30,7 +35,7 @@ def get_col():
 
 
 def get_input():
-    print('Deseja informar a coluna ou linha primeiro?')
+    print('Informe a linha se quiser colocar o navio na horizontal, e coluna, se quiser colocar na vertical')
     print('1) Coluna')
     print('2) Linha')
     option = int(input(' -> '))
@@ -49,10 +54,15 @@ def get_input():
 
 
 def get_shot_position():
-    print('Informe a linha e a coluna em que deseja atirar.')
-    x = get_row()
-    y = get_col()
-    return 'shoot;{},{};'.format(x, y)
+    print('Deseja desistir? (s/n)')
+    give_up = input(' -> ')
+    if give_up == 'n':
+        print('Informe a linha e a coluna em que deseja atirar.')
+        x = get_row()
+        y = get_col()
+        return 'shoot;{},{};'.format(x, y)
+    else:
+        return 'give_up;;'
 
 
 class ClientGame:
@@ -99,6 +109,7 @@ def main():
     code, position, data = client.recv_message().split(';')
     while code not in ['lost', 'won']:
         if code == 'begin':
+            print(BEGIN_MSGS[data])
             code, position, data = client.recv_message().split(';')
         elif code == 'your_turn':
             print('Sua vez')
