@@ -1,5 +1,6 @@
 import pdb
 import socket
+import string
 import sys
 
 from player import Player
@@ -8,6 +9,43 @@ WIN_MSGS = {
     'opp_gup': 'Você ganhou a partida! Seu oponente desistiu.',
     'sunk_all': 'Parabéns, você afundou todos os navios do adversário'
 }
+
+
+def get_row():
+    print('Escolha uma letra entre A e J')
+    x = input(' -> ')
+    while not x.upper() in string.ascii_uppercase[:10]:
+        print('Linha inválida')
+        x = input(' -> ')
+    return x.upper()
+
+
+def get_col():
+    print('Escolha um número entre 1 e 10')
+    y = int(input(' -> '))
+    while not y in range(1, 11):
+        print('Coluna inválida')
+        y = int(input(' -> '))
+    return y
+
+
+def get_input():
+    print('Deseja informar a coluna ou linha primeiro?')
+    print('1) Coluna')
+    print('2) Linha')
+    option = int(input(' -> '))
+    while not option in range(1, 3):
+        print('Número inválido')
+        option = int(input(' -> '))
+    if option == 2:
+        x = get_row()
+        print('Informe a coluna')
+        y = get_col()
+    elif option == 1:
+        x = get_col()
+        print('Informe a linha')
+        y = get_row()
+    return x, y
 
 
 class ClientGame:
@@ -21,12 +59,23 @@ class ClientGame:
     def recv_message(self, bytes=4096):
         return self.socket.recv(bytes).decode('utf8')
 
+    def set_board(self):
+        for i in range(5, 0, -1):
+            print('Informe a posição inicial do navio de tamanho {}'.format(i))
+            self.player.print_board('mine')
+            x, y = get_input()
+            set_board_again = self.player.set_board(x, y, i)
+            while not set_board_again:
+                print('Posição inválida!')
+                x, y = get_input()
+                set_board_again = self.player.set_board(x, y, i)
+            self.player.print_board('mine')
+
 
 def main():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     host = input(' -> Informe o IP do servidor: ')
     port = 8888
-
 
     try:
         soc.connect((host, port))
@@ -35,6 +84,7 @@ def main():
         sys.exit()
 
     client = ClientGame(soc)
+    client.set_board()
 
     board = client.player.send_my_board()
     client.send_message(('begin;;' + board).encode('utf8'))

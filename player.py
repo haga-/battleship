@@ -2,14 +2,10 @@ from sys import stdout
 
 from board import Board
 
-LAYOUT_ONE = 'ship,ship,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,blank,ship,blank,blank,blank,blank,blank,blank,blank,ship,blank,ship,blank,blank,blank,blank,blank,blank,blank,ship,blank,ship,blank,ship,ship,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship'
-
-LAYOUT_TWO = 'blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,ship,ship,ship,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,ship,ship,ship,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,blank,blank,ship,blank,blank,blank,blank,blank,blank,blank,ship,ship,ship'
-
 class Player:
     # constructor
     def __init__(self):
-        self.my_board = Board(LAYOUT_TWO)
+        self.my_board = Board()
         self.opponent_board = Board()
 
     # sends board as string
@@ -17,29 +13,29 @@ class Player:
         return self.my_board.send_board()
 
     # set a ship on players own board
-    # def set_board(self, start_1, start_2, n):
-    #     # vertical
-    #     if type(start_1) is int:
-    #         start_2 = ord(start_2) - 65
-    #         ship_to_be = []
-    #         for i in range(start_2, n + start_2):
-    #             ship_to_be.append(self.my_board[i][start_1 - 1])
-    #         if ship_to_be == ['blank'] * n:
-    #             for i in range(start_2, n + start_2):
-    #                 self.my_board[i][start_1 - 1] = 'ship'
-    #         else:
-    #             return False
-    #     # horizontal
-    #     elif type(start_1) is str:
-    #         start_1 = ord(start_1) - 65
-    #         start = start_2 - 1
-    #         finish = n + start_2 - 1
-    #         if self.my_board[start_1][start:finish] == ['blank'] * n:
-    #             for i in range(start, finish):
-    #                 self.my_board[start_1][i] = 'ship'
-    #         else:
-    #             return False
-    #     return True
+    def set_board(self, start_1, start_2, n):
+        # vertical
+        if type(start_1) is int:
+            start_2 = ord(start_2) - 65
+            ship_to_be = []
+            for i in range(start_2, n + start_2):
+                ship_to_be.append(self.my_board.board[i][start_1 - 1])
+            if ship_to_be == ['blank'] * n:
+                for i in range(start_2, n + start_2):
+                    self.my_board.board[i][start_1 - 1] = 'ship'
+            else:
+                return False
+        # horizontal
+        elif type(start_1) is str:
+            start_1 = ord(start_1) - 65
+            start = start_2 - 1
+            finish = n + start_2 - 1
+            if self.my_board.board[start_1][start:finish] == ['blank'] * n:
+                for i in range(start, finish):
+                    self.my_board.board[start_1][i] = 'ship'
+            else:
+                return False
+        return True
 
     # updates own board after opponents play, and prints boards
     def update_my_board(self, position, message):
