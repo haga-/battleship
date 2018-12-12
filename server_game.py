@@ -79,28 +79,26 @@ def start_server():
     # SO_REUSEADDR flag tells the kernel to reuse a local socket in TIME_WAIT state,
     # without waiting for its natural timeout to expire
     soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    print('Socket created')
     clients = 0
 
     try:
         soc.bind(('', port))
     except:
-        print('Bind failed. Error : ' + str(sys.exc_info()))
+        print('Erro: ' + str(sys.exc_info()))
         sys.exit()
 
     soc.listen(5)       # queue up to 5 requests
-    print('Socket now listening')
 
     while clients < 2:
         connection, address = soc.accept()
         ip, port = str(address[0]), str(address[1])
-        print('Connected with {}: {}'.format(ip, port))
+        print('Conectado com {}: {}'.format(ip, port))
         clients = clients + 1
 
         try:
             Thread(target=client_thread, args=(connection, ip, port)).start()
         except:
-            print('Thread did not start.')
+            print('Thread não iniciou.')
             traceback.print_exc()
 
     soc.close()

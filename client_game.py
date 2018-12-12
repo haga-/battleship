@@ -48,6 +48,13 @@ def get_input():
     return x, y
 
 
+def get_shot_position():
+    print('Informe a linha e a coluna em que deseja atirar.')
+    x = get_row()
+    y = get_col()
+    return 'shoot;{},{};'.format(x, y)
+
+
 class ClientGame:
     def __init__(self, socket):
         self.player = Player()
@@ -91,30 +98,24 @@ def main():
 
     code, position, data = client.recv_message().split(';')
     while code not in ['lost', 'won']:
-        print(code, position, data)
         if code == 'begin':
-            print(data)
             code, position, data = client.recv_message().split(';')
         elif code == 'your_turn':
-            print('Your turn')
+            print('Sua vez')
             if data == 'can_shoot':
-                print('Can Shoot')
+                print('Pode atirar')
             elif data == 'hit_opp':
-                print('Hit opponent')
                 client.player.update_opponent_board(position, 'hit')
             elif data == 'opp_missed':
-                print('Opponent missed')
                 client.player.update_my_board(position, 'miss')
-            message = input(' -> ')
+            message = get_shot_position()
             client.send_message(message.encode('utf8'))
             code = ''
         elif code == 'opp_turn':
-            print('Opponent turn')
+            print('Vez do adversário')
             if data == 'missed_opp':
-                print('Missed opponent')
                 client.player.update_opponent_board(position, 'miss')
             elif data == 'opp_hit':
-                print('Opponent hit')
                 client.player.update_my_board(position, 'hit')
             code = ''
         else:
@@ -127,7 +128,6 @@ def main():
 
     client.player.print_boards()
 
-    # client.send_message(b'--quit--;;')
     client.socket.close()
 
 
